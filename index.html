@@ -1,0 +1,1925 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes" />
+    <title>🌾 AgriNova AI+ | Next‑Gen Farming</title>
+
+    <!-- Fonts & Icons -->
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,300;14..32,400;14..32,500;14..32,600;14..32,700;14..32,800&display=swap" rel="stylesheet" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" />
+
+    <!-- Libraries -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@4.15.0/dist/tf.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@tensorflow-models/mobilenet@2.1.1/dist/mobilenet.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/qrcodejs@1.0.0/qrcode.min.js"></script>
+
+    <style>
+        /* ============================================================
+                   GLOBAL RESET & VARIABLES
+                   ============================================================ */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --bg-primary: #08170e;
+            --bg-secondary: #0e2418;
+            --glass-bg: rgba(255, 255, 255, 0.06);
+            --glass-border: rgba(255, 255, 255, 0.08);
+            --glass-hover: rgba(255, 255, 255, 0.12);
+            --text-primary: #eaffea;
+            --text-secondary: #b0d8b0;
+            --accent: #6fcf97;
+            --accent-dark: #27ae60;
+            --accent-glow: rgba(111, 207, 151, 0.4);
+            --shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.8);
+            --radius-lg: 32px;
+            --radius-md: 20px;
+            --radius-sm: 12px;
+            --nav-width: 270px;
+            --transition: all 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+        }
+
+        body.light {
+            --bg-primary: #f0f9f0;
+            --bg-secondary: #e2f0e2;
+            --glass-bg: rgba(255, 255, 255, 0.7);
+            --glass-border: rgba(0, 0, 0, 0.08);
+            --glass-hover: rgba(255, 255, 255, 0.9);
+            --text-primary: #0b2f1a;
+            --text-secondary: #1f4f2e;
+            --shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.15);
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            min-height: 100vh;
+            display: flex;
+            transition: background 0.5s, color 0.3s;
+            overflow-x: hidden;
+        }
+
+        /* Scrollbar */
+        ::-webkit-scrollbar {
+            width: 6px;
+        }
+        ::-webkit-scrollbar-track {
+            background: transparent;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: var(--accent);
+            border-radius: 20px;
+        }
+
+        /* ============================================================
+                   PARTICLE BACKGROUND
+                   ============================================================ */
+        #particles-canvas {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 0;
+            opacity: 0.5;
+        }
+
+        /* ============================================================
+                   SIDEBAR
+                   ============================================================ */
+        .sidebar {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: var(--nav-width);
+            height: 100vh;
+            background: var(--glass-bg);
+            backdrop-filter: blur(24px);
+            -webkit-backdrop-filter: blur(24px);
+            border-right: 1px solid var(--glass-border);
+            padding: 1.8rem 1rem;
+            overflow-y: auto;
+            z-index: 1000;
+            transition: transform 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94),
+                background 0.4s;
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+
+        .sidebar .logo {
+            font-size: 1.8rem;
+            font-weight: 800;
+            padding: 0 0.5rem 1.8rem;
+            background: linear-gradient(135deg, #a8e6cf, #3b8d68);
+            -webkit-background-clip: text;
+            background-clip: text;
+            color: transparent;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            letter-spacing: -0.5px;
+            border-bottom: 1px solid var(--glass-border);
+        }
+        .sidebar .logo i {
+            font-size: 2rem;
+            color: var(--accent);
+            background: transparent;
+        }
+
+        .sidebar nav {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+        }
+        .sidebar nav a {
+            display: flex;
+            align-items: center;
+            gap: 14px;
+            padding: 0.75rem 1rem;
+            border-radius: var(--radius-sm);
+            color: var(--text-secondary);
+            font-weight: 500;
+            font-size: 0.95rem;
+            transition: var(--transition);
+            text-decoration: none;
+            position: relative;
+            overflow: hidden;
+        }
+        .sidebar nav a i {
+            width: 24px;
+            text-align: center;
+            font-size: 1.1rem;
+            transition: var(--transition);
+        }
+        .sidebar nav a:hover {
+            background: var(--glass-hover);
+            color: var(--text-primary);
+            transform: translateX(6px);
+        }
+        .sidebar nav a.active {
+            background: var(--accent);
+            color: #08170e;
+            box-shadow: 0 0 30px var(--accent-glow);
+            font-weight: 600;
+        }
+        .sidebar nav a.active i {
+            color: #08170e;
+        }
+        .sidebar nav a.active::before {
+            content: '';
+            position: absolute;
+            left: -4px;
+            top: 10%;
+            height: 80%;
+            width: 4px;
+            background: white;
+            border-radius: 10px;
+        }
+
+        .sidebar .bottom-actions {
+            margin-top: auto;
+            padding-top: 1.5rem;
+            border-top: 1px solid var(--glass-border);
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+        }
+        .sidebar .bottom-actions button {
+            background: transparent;
+            border: none;
+            color: var(--text-secondary);
+            padding: 0.7rem 1rem;
+            border-radius: var(--radius-sm);
+            display: flex;
+            align-items: center;
+            gap: 14px;
+            cursor: pointer;
+            font-size: 0.9rem;
+            font-weight: 500;
+            transition: var(--transition);
+            width: 100%;
+            text-align: left;
+        }
+        .sidebar .bottom-actions button:hover {
+            background: var(--glass-hover);
+            color: var(--text-primary);
+            transform: translateX(6px);
+        }
+
+        /* Hamburger */
+        .hamburger {
+            display: none;
+            position: fixed;
+            top: 20px;
+            left: 20px;
+            z-index: 2000;
+            background: var(--glass-bg);
+            backdrop-filter: blur(12px);
+            border: 1px solid var(--glass-border);
+            border-radius: 50%;
+            width: 52px;
+            height: 52px;
+            color: var(--text-primary);
+            font-size: 1.4rem;
+            cursor: pointer;
+            transition: var(--transition);
+            align-items: center;
+            justify-content: center;
+            box-shadow: var(--shadow);
+        }
+        .hamburger:hover {
+            transform: scale(1.05);
+            background: var(--accent);
+            color: #08170e;
+        }
+
+        /* ============================================================
+                   MAIN CONTENT
+                   ============================================================ */
+        .main {
+            margin-left: var(--nav-width);
+            flex: 1;
+            padding: 2rem 2.5rem 4rem;
+            position: relative;
+            z-index: 2;
+            min-height: 100vh;
+        }
+
+        .page {
+            display: none;
+            animation: fadeSlideUp 0.6s cubic-bezier(0.25, 0.46, 0.45, 0.94) forwards;
+        }
+        .page.active {
+            display: block;
+        }
+
+        @keyframes fadeSlideUp {
+            from {
+                opacity: 0;
+                transform: translateY(30px) scale(0.98);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0) scale(1);
+            }
+        }
+
+        /* ============================================================
+                   GLASS CARDS
+                   ============================================================ */
+        .glass {
+            background: var(--glass-bg);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            border: 1px solid var(--glass-border);
+            border-radius: var(--radius-lg);
+            padding: 2rem;
+            margin-bottom: 2rem;
+            box-shadow: var(--shadow);
+            transition: transform 0.4s, box-shadow 0.4s, background 0.4s;
+        }
+        .glass:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 40px 60px -20px rgba(0, 0, 0, 0.6);
+            background: var(--glass-hover);
+        }
+
+        .glass-header {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 1.5rem;
+        }
+        .glass-header h2,
+        .glass-header h3 {
+            font-weight: 700;
+            font-size: 1.5rem;
+        }
+        .glass-header i {
+            font-size: 1.8rem;
+            color: var(--accent);
+        }
+
+        /* ============================================================
+                   GRIDS & HELPERS
+                   ============================================================ */
+        .grid-2 {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+            gap: 1.8rem;
+        }
+        .grid-3 {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1.5rem;
+        }
+        .grid-4 {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+            gap: 1.2rem;
+        }
+
+        .flex {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.8rem;
+            align-items: center;
+        }
+        .flex-between {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 1rem;
+        }
+
+        .badge {
+            background: var(--accent);
+            color: #08170e;
+            padding: 0.2rem 0.9rem;
+            border-radius: 40px;
+            font-size: 0.7rem;
+            font-weight: 700;
+            letter-spacing: 0.5px;
+            text-transform: uppercase;
+            animation: pulseBadge 2s infinite;
+        }
+        @keyframes pulseBadge {
+            0%,
+            100% {
+                opacity: 1;
+            }
+            50% {
+                opacity: 0.6;
+            }
+        }
+
+        .stat-card {
+            text-align: center;
+            padding: 1.5rem 1rem;
+            background: rgba(0, 0, 0, 0.2);
+            border-radius: var(--radius-md);
+            border: 1px solid var(--glass-border);
+            transition: var(--transition);
+        }
+        .stat-card:hover {
+            transform: scale(1.02);
+            border-color: var(--accent);
+        }
+        .stat-card .number {
+            font-size: 2.6rem;
+            font-weight: 800;
+            color: var(--accent);
+            line-height: 1.2;
+        }
+        .stat-card .label {
+            font-size: 0.9rem;
+            color: var(--text-secondary);
+            font-weight: 500;
+        }
+
+        input,
+        select {
+            width: 100%;
+            padding: 0.85rem 1.2rem;
+            background: rgba(255, 255, 255, 0.06);
+            border: 1px solid var(--glass-border);
+            border-radius: var(--radius-sm);
+            color: var(--text-primary);
+            font-size: 0.95rem;
+            outline: none;
+            transition: var(--transition);
+            font-weight: 400;
+        }
+        input:focus,
+        select:focus {
+            border-color: var(--accent);
+            box-shadow: 0 0 0 4px var(--accent-glow);
+            background: rgba(255, 255, 255, 0.1);
+        }
+        input::placeholder {
+            color: var(--text-secondary);
+            opacity: 0.6;
+        }
+
+        button {
+            background: var(--accent);
+            border: none;
+            padding: 0.75rem 1.8rem;
+            border-radius: 60px;
+            font-weight: 700;
+            color: #08170e;
+            cursor: pointer;
+            transition: var(--transition);
+            display: inline-flex;
+            align-items: center;
+            gap: 10px;
+            font-size: 0.95rem;
+            letter-spacing: 0.3px;
+            box-shadow: 0 4px 15px rgba(111, 207, 151, 0.2);
+        }
+        button:hover {
+            transform: scale(1.04) translateY(-2px);
+            box-shadow: 0 8px 30px var(--accent-glow);
+            background: #88e0aa;
+        }
+        button:active {
+            transform: scale(0.96);
+        }
+        button.secondary {
+            background: var(--glass-bg);
+            color: var(--text-primary);
+            box-shadow: none;
+            border: 1px solid var(--glass-border);
+        }
+        button.secondary:hover {
+            background: var(--glass-hover);
+            box-shadow: var(--shadow);
+        }
+
+        .result-box {
+            background: rgba(0, 0, 0, 0.3);
+            border-radius: var(--radius-md);
+            padding: 1.5rem;
+            margin-top: 1.5rem;
+            border-left: 6px solid var(--accent);
+            animation: fadeSlideUp 0.5s ease;
+        }
+        .result-box p {
+            margin: 0.4rem 0;
+            line-height: 1.6;
+        }
+
+        .gauge {
+            height: 14px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 40px;
+            overflow: hidden;
+            margin: 1rem 0;
+            width: 100%;
+        }
+        .gauge-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #f1c40f, #6fcf97);
+            border-radius: 40px;
+            transition: width 1.2s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+            width: 0%;
+        }
+
+        .hidden {
+            display: none !important;
+        }
+        .text-accent {
+            color: var(--accent);
+        }
+        .text-muted {
+            color: var(--text-secondary);
+        }
+
+        /* ============================================================
+                   TOAST NOTIFICATIONS
+                   ============================================================ */
+        #toast-container {
+            position: fixed;
+            top: 30px;
+            right: 30px;
+            z-index: 9999;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            max-width: 380px;
+            width: 100%;
+        }
+        .toast {
+            background: var(--glass-bg);
+            backdrop-filter: blur(20px);
+            border: 1px solid var(--glass-border);
+            padding: 1rem 1.5rem;
+            border-radius: var(--radius-sm);
+            color: var(--text-primary);
+            box-shadow: var(--shadow);
+            animation: slideInRight 0.5s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            font-weight: 500;
+            border-left: 6px solid var(--accent);
+        }
+        .toast.error {
+            border-left-color: #ef5350;
+        }
+        @keyframes slideInRight {
+            from {
+                opacity: 0;
+                transform: translateX(60px);
+            }
+            to {
+                opacity: 1;
+                transform: translateX(0);
+            }
+        }
+
+        /* ============================================================
+                   CHATBOT
+                   ============================================================ */
+        .chatbot-float {
+            position: fixed;
+            bottom: 30px;
+            right: 30px;
+            z-index: 500;
+            background: var(--accent);
+            color: #08170e;
+            border-radius: 60px;
+            padding: 0.9rem 1.8rem;
+            box-shadow: 0 15px 40px rgba(0, 0, 0, 0.5);
+            cursor: pointer;
+            font-weight: 700;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            transition: var(--transition);
+            border: none;
+            font-size: 1rem;
+        }
+        .chatbot-float:hover {
+            transform: scale(1.05);
+            box-shadow: 0 20px 50px var(--accent-glow);
+        }
+        .chatbot-window {
+            position: fixed;
+            bottom: 110px;
+            right: 30px;
+            width: 380px;
+            max-height: 500px;
+            background: var(--glass-bg);
+            backdrop-filter: blur(30px);
+            border: 1px solid var(--glass-border);
+            border-radius: var(--radius-lg);
+            padding: 1.2rem;
+            display: none;
+            flex-direction: column;
+            z-index: 600;
+            box-shadow: var(--shadow);
+        }
+        .chatbot-window.open {
+            display: flex;
+            animation: fadeSlideUp 0.4s ease;
+        }
+        .chatbot-window .messages {
+            flex: 1;
+            overflow-y: auto;
+            max-height: 320px;
+            margin-bottom: 0.8rem;
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+        }
+        .chatbot-window .messages .msg {
+            padding: 0.6rem 1rem;
+            border-radius: 20px;
+            max-width: 85%;
+            animation: fadeSlideUp 0.3s ease;
+        }
+        .chatbot-window .messages .user {
+            background: var(--accent);
+            color: #08170e;
+            align-self: flex-end;
+            border-bottom-right-radius: 4px;
+        }
+        .chatbot-window .messages .bot {
+            background: rgba(255, 255, 255, 0.06);
+            align-self: flex-start;
+            border-bottom-left-radius: 4px;
+        }
+        .chatbot-window .input-area {
+            display: flex;
+            gap: 8px;
+        }
+        .chatbot-window .input-area input {
+            flex: 1;
+            border-radius: 40px;
+            padding: 0.6rem 1.2rem;
+        }
+        .chatbot-window .input-area button {
+            border-radius: 40px;
+            padding: 0.6rem 1.2rem;
+        }
+
+        /* ============================================================
+                   RESPONSIVE
+                   ============================================================ */
+        @media (max-width: 1024px) {
+            .grid-4 {
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
+
+        @media (max-width: 900px) {
+            .sidebar {
+                transform: translateX(-100%);
+            }
+            .sidebar.open {
+                transform: translateX(0);
+            }
+            .main {
+                margin-left: 0;
+                padding: 1.5rem 1rem;
+            }
+            .hamburger {
+                display: flex;
+            }
+            .chatbot-window {
+                width: 90%;
+                right: 5%;
+                bottom: 100px;
+                max-height: 400px;
+            }
+        }
+
+        @media (max-width: 500px) {
+            .grid-2,
+            .grid-3,
+            .grid-4 {
+                grid-template-columns: 1fr;
+            }
+            .glass {
+                padding: 1.2rem;
+            }
+            .stat-card .number {
+                font-size: 2rem;
+            }
+            .sidebar .logo {
+                font-size: 1.4rem;
+            }
+        }
+
+        /* ============================================================
+                   LOADING SHIMMER
+                   ============================================================ */
+        .shimmer {
+            background: linear-gradient(90deg,
+                    var(--glass-bg) 25%,
+                    var(--glass-hover) 50%,
+                    var(--glass-bg) 75%);
+            background-size: 200% 100%;
+            animation: shimmer 1.5s infinite;
+        }
+        @keyframes shimmer {
+            0% {
+                background-position: 200% 0;
+            }
+            100% {
+                background-position: -200% 0;
+            }
+        }
+
+        /* Floating clock / live indicator */
+        .live-indicator {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 0.8rem;
+            color: var(--text-secondary);
+        }
+        .live-dot {
+            width: 10px;
+            height: 10px;
+            background: #4caf50;
+            border-radius: 50%;
+            animation: pulse-dot 1.5s infinite;
+        }
+        @keyframes pulse-dot {
+            0%,
+            100% {
+                opacity: 1;
+                transform: scale(1);
+            }
+            50% {
+                opacity: 0.4;
+                transform: scale(0.7);
+            }
+        }
+
+        /* Tilt effect on cards (optional) - handled by JS */
+        .tilt {
+            transition: transform 0.2s ease;
+        }
+    </style>
+</head>
+<body>
+
+    <!-- ============================================================
+    PARTICLES CANVAS
+    ============================================================ -->
+    <canvas id="particles-canvas"></canvas>
+
+    <!-- ============================================================
+    TOAST CONTAINER
+    ============================================================ -->
+    <div id="toast-container"></div>
+
+    <!-- ============================================================
+    HAMBURGER
+    ============================================================ -->
+    <button class="hamburger" id="hamburgerBtn" aria-label="Toggle menu">
+        <i class="fas fa-bars"></i>
+    </button>
+
+    <!-- ============================================================
+    SIDEBAR
+    ============================================================ -->
+    <aside class="sidebar" id="sidebar">
+        <div class="logo">
+            <i class="fas fa-seedling"></i> AgriNova<span style="color:var(--accent);">+</span>
+        </div>
+        <nav id="navMenu">
+            <a href="#" data-page="dashboard" class="active"><i class="fas fa-th-large"></i> Dashboard</a>
+            <a href="#" data-page="cropadvisor"><i class="fas fa-chart-line"></i> Crop Advisor</a>
+            <a href="#" data-page="disease"><i class="fas fa-microscope"></i> AI Disease</a>
+            <a href="#" data-page="soil"><i class="fas fa-tachometer-alt"></i> Soil Health</a>
+            <a href="#" data-page="irrigation"><i class="fas fa-tint"></i> Irrigation</a>
+            <a href="#" data-page="market"><i class="fas fa-chart-simple"></i> Market</a>
+            <a href="#" data-page="carbon"><i class="fas fa-cloud-sun"></i> Carbon</a>
+            <a href="#" data-page="fertilizer"><i class="fas fa-flask"></i> Fertilizer</a>
+            <a href="#" data-page="rotation"><i class="fas fa-sync-alt"></i> Rotation</a>
+            <a href="#" data-page="pest"><i class="fas fa-bug"></i> Pest Alert</a>
+            <a href="#" data-page="profit"><i class="fas fa-coins"></i> Profit</a>
+            <a href="#" data-page="seed"><i class="fas fa-seedling"></i> Seed Selector</a>
+            <a href="#" data-page="harvest"><i class="fas fa-clock"></i> Harvest Timer</a>
+            <a href="#" data-page="yieldforecast"><i class="fas fa-chart-bar"></i> Yield Forecast</a>
+            <a href="#" data-page="forum"><i class="fas fa-comments"></i> Forum</a>
+            <a href="#" data-page="water"><i class="fas fa-water"></i> Water Quality</a>
+            <a href="#" data-page="gamification"><i class="fas fa-trophy"></i> Gamification</a>
+            <a href="#" data-page="history"><i class="fas fa-history"></i> History</a>
+        </nav>
+        <div class="bottom-actions">
+            <button id="darkToggle"><i class="fas fa-moon"></i> Dark / Light</button>
+            <button id="langToggle"><i class="fas fa-globe"></i> English</button>
+            <div style="padding: 0.5rem 1rem; font-size:0.8rem; color:var(--text-secondary);">
+                <i class="far fa-clock"></i> <span id="liveClock">--:--:--</span>
+            </div>
+        </div>
+    </aside>
+
+    <!-- ============================================================
+    MAIN CONTENT
+    ============================================================ -->
+    <div class="main" id="mainContent">
+
+        <!-- ==========================================================
+        PAGE: DASHBOARD
+        ========================================================== -->
+        <section id="page-dashboard" class="page active">
+            <div class="flex-between">
+                <div>
+                    <h2 style="font-size:2.2rem; font-weight:800;"><i class="fas fa-th-large text-accent"></i> Dashboard</h2>
+                    <p class="text-muted">Welcome back, Farmer! Here's your farm overview.</p>
+                </div>
+                <div class="live-indicator">
+                    <span class="live-dot"></span> Live
+                </div>
+            </div>
+
+            <div class="grid-3" style="margin-bottom: 2rem;">
+                <div class="stat-card">
+                    <div class="number" id="dashCrops">0</div>
+                    <div class="label">Recommendations</div>
+                </div>
+                <div class="stat-card">
+                    <div class="number" id="dashYield">0</div>
+                    <div class="label">Avg Yield (t/ha)</div>
+                </div>
+                <div class="stat-card">
+                    <div class="number" id="dashCarbon">0</div>
+                    <div class="label">CO₂ kg/ha</div>
+                </div>
+            </div>
+
+            <div class="glass">
+                <div class="glass-header"><h3><i class="fas fa-cloud-sun"></i> Live Weather</h3></div>
+                <div id="dashWeather" class="shimmer" style="padding: 1rem; border-radius: var(--radius-sm);">Loading weather...</div>
+            </div>
+
+            <div class="glass">
+                <div class="glass-header"><h3><i class="fas fa-chart-simple"></i> Yield Projection</h3></div>
+                <canvas id="dashChart" height="180"></canvas>
+            </div>
+
+            <div class="glass">
+                <div class="glass-header"><h3><i class="fas fa-bolt"></i> Quick Actions</h3></div>
+                <div class="flex">
+                    <button onclick="navigateTo('cropadvisor')"><i class="fas fa-leaf"></i> Get Advice</button>
+                    <button onclick="navigateTo('disease')"><i class="fas fa-camera"></i> Scan Disease</button>
+                    <button onclick="navigateTo('market')"><i class="fas fa-chart-simple"></i> Check Prices</button>
+                    <button onclick="navigateTo('forum')"><i class="fas fa-comments"></i> Forum</button>
+                </div>
+            </div>
+        </section>
+
+        <!-- ==========================================================
+        PAGE: CROP ADVISOR
+        ========================================================== -->
+        <section id="page-cropadvisor" class="page">
+            <h2 style="font-size:2rem; font-weight:800; margin-bottom:1.5rem;"><i class="fas fa-chart-line text-accent"></i> Crop & Yield Advisor</h2>
+            <div class="glass">
+                <p class="text-muted">Enter soil & climate parameters. Click <strong>Voice</strong> to speak values.</p>
+                <div class="grid-2" style="margin-top:1rem;">
+                    <div><label style="font-weight:600;display:block;margin-bottom:0.3rem;">Nitrogen (kg/ha)</label><input type="number" id="nVal" value="85" step="any" /></div>
+                    <div><label style="font-weight:600;display:block;margin-bottom:0.3rem;">Phosphorus (kg/ha)</label><input type="number" id="pVal" value="42" step="any" /></div>
+                    <div><label style="font-weight:600;display:block;margin-bottom:0.3rem;">Potassium (kg/ha)</label><input type="number" id="kVal" value="55" step="any" /></div>
+                    <div><label style="font-weight:600;display:block;margin-bottom:0.3rem;">Temperature (°C)</label><input type="number" id="tempVal" value="27" step="any" /></div>
+                    <div><label style="font-weight:600;display:block;margin-bottom:0.3rem;">Humidity (%)</label><input type="number" id="humVal" value="68" step="any" /></div>
+                    <div><label style="font-weight:600;display:block;margin-bottom:0.3rem;">Soil pH</label><input type="number" id="phVal" value="6.4" step="0.1" /></div>
+                    <div><label style="font-weight:600;display:block;margin-bottom:0.3rem;">Rainfall (mm/year)</label><input type="number" id="rainVal" value="190" step="any" /></div>
+                </div>
+                <div class="flex" style="margin-top:1.2rem;">
+                    <button id="predictCropBtn"><i class="fas fa-leaf"></i> Recommend</button>
+                    <button id="voiceCropBtn" class="secondary"><i class="fas fa-microphone"></i> Voice</button>
+                </div>
+                <div id="cropResult" class="result-box hidden">
+                    <p><strong>🌾 Best Crop:</strong> <span id="recCrop">-</span></p>
+                    <p><strong>📊 Expected Yield:</strong> <span id="recYield">-</span> t/ha</p>
+                    <p><strong>💡 Fertilizer Tip:</strong> <span id="fertTip">-</span></p>
+                    <div class="flex" style="margin-top:0.8rem;">
+                        <button id="speakResultBtn"><i class="fas fa-volume-up"></i> Speak</button>
+                        <button id="saveRecBtn"><i class="fas fa-save"></i> Save</button>
+                        <button id="exportPdfBtn"><i class="fas fa-file-pdf"></i> PDF</button>
+                    </div>
+                    <div id="qrcode" style="margin-top:1rem;"></div>
+                </div>
+            </div>
+        </section>
+
+        <!-- ==========================================================
+        PAGE: DISEASE
+        ========================================================== -->
+        <section id="page-disease" class="page">
+            <h2 style="font-size:2rem; font-weight:800; margin-bottom:1.5rem;"><i class="fas fa-microscope text-accent"></i> AI Disease Detector</h2>
+            <div class="glass">
+                <p class="text-muted">Upload a leaf photo. Our AI (MobileNet) will analyze it locally.</p>
+                <input type="file" id="leafImage" accept="image/*" capture="environment" style="margin: 1rem 0;" />
+                <canvas id="diseaseCanvas" width="224" height="224" style="display:none;"></canvas>
+                <div id="diseaseLoader" class="hidden"><i class="fas fa-spinner fa-spin"></i> Analyzing with AI...</div>
+                <div id="diseaseOutput" class="result-box hidden">
+                    <p><strong>🦠 Diagnosis:</strong> <span id="diseaseName"></span></p>
+                    <p><strong>📊 Confidence:</strong> <span id="diseaseConf"></span>%</p>
+                    <p><strong>🌱 Organic Remedy:</strong> <span id="remedyText"></span></p>
+                </div>
+            </div>
+        </section>
+
+        <!-- ==========================================================
+        PAGE: SOIL
+        ========================================================== -->
+        <section id="page-soil" class="page">
+            <h2 style="font-size:2rem; font-weight:800; margin-bottom:1.5rem;"><i class="fas fa-tachometer-alt text-accent"></i> Soil Health Analyzer</h2>
+            <div class="glass">
+                <div class="grid-2">
+                    <div><label>N (kg/ha)</label><input type="number" id="soilN" value="85" /></div>
+                    <div><label>P (kg/ha)</label><input type="number" id="soilP" value="42" /></div>
+                    <div><label>K (kg/ha)</label><input type="number" id="soilK" value="55" /></div>
+                    <div><label>pH</label><input type="number" id="soilpH" value="6.4" step="0.1" /></div>
+                    <div><label>Organic Matter (%)</label><input type="number" id="organicMatter" value="2.5" step="0.1" /></div>
+                </div>
+                <button id="analyzeSoilBtn"><i class="fas fa-flask"></i> Analyze</button>
+                <div id="soilResult" class="result-box hidden">
+                    <p><strong>Score:</strong> <span id="soilScore"></span>/100 (<span id="soilRating"></span>)</p>
+                    <p><strong>Recommendation:</strong> <span id="soilReco"></span></p>
+                    <div class="gauge"><div id="soilGauge" class="gauge-fill" style="width:0%"></div></div>
+                </div>
+            </div>
+        </section>
+
+        <!-- ==========================================================
+        PAGE: IRRIGATION
+        ========================================================== -->
+        <section id="page-irrigation" class="page">
+            <h2 style="font-size:2rem; font-weight:800; margin-bottom:1.5rem;"><i class="fas fa-tint text-accent"></i> Smart Irrigation</h2>
+            <div class="glass">
+                <div class="grid-2">
+                    <div><label>Crop</label><select id="irriCrop"><option>Rice</option><option>Wheat</option><option>Maize</option><option>Cotton</option><option>Sugarcane</option></select></div>
+                    <div><label>Temp (°C)</label><input type="number" id="irriTemp" value="28" /></div>
+                    <div><label>Rainfall (mm/week)</label><input type="number" id="irriRain" value="10" /></div>
+                    <div><label>Soil Moisture (%)</label><input type="number" id="soilMoisture" value="45" /></div>
+                </div>
+                <button id="calcIrrigationBtn"><i class="fas fa-calculator"></i> Schedule</button>
+                <div id="irrigationResult" class="result-box hidden">
+                    <p><strong>💧 Daily Need:</strong> <span id="dailyWater"></span> mm/day</p>
+                    <p><strong>⏱️ Frequency:</strong> <span id="irriFreq"></span></p>
+                    <p><strong>⚠️ Alert:</strong> <span id="irriAlert"></span></p>
+                </div>
+            </div>
+        </section>
+
+        <!-- ==========================================================
+        PAGE: MARKET
+        ========================================================== -->
+        <section id="page-market" class="page">
+            <h2 style="font-size:2rem; font-weight:800; margin-bottom:1.5rem;"><i class="fas fa-chart-simple text-accent"></i> Market Simulator</h2>
+            <div class="glass">
+                <div class="flex-between">
+                    <p class="text-muted">Live simulated prices updated every 15 seconds.</p>
+                    <button id="refreshMarketBtn"><i class="fas fa-sync-alt"></i> Refresh</button>
+                </div>
+                <div id="marketGrid" class="grid-3" style="margin:1.5rem 0;"></div>
+                <canvas id="marketChart" height="200"></canvas>
+            </div>
+        </section>
+
+        <!-- ==========================================================
+        PAGE: CARBON
+        ========================================================== -->
+        <section id="page-carbon" class="page">
+            <h2 style="font-size:2rem; font-weight:800; margin-bottom:1.5rem;"><i class="fas fa-cloud-sun text-accent"></i> Carbon Footprint</h2>
+            <div class="glass">
+                <div class="grid-2">
+                    <div><label>Area (ha)</label><input type="number" id="farmArea" value="5" step="0.5" /></div>
+                    <div><label>Fertilizer (kg/yr)</label><input type="number" id="fertUse" value="450" /></div>
+                    <div><label>Diesel (liters/yr)</label><input type="number" id="dieselUse" value="800" /></div>
+                    <div><label>Electricity (kWh/yr)</label><input type="number" id="electricity" value="3000" /></div>
+                </div>
+                <button id="calcCarbonBtn"><i class="fas fa-calculator"></i> Calculate</button>
+                <div id="carbonResult" class="result-box hidden">
+                    <p><strong>Total CO₂e:</strong> <span id="co2Value"></span> kg</p>
+                    <p><strong>Per ha:</strong> <span id="co2PerHa"></span> kg</p>
+                    <p><strong>🌿 Offset:</strong> <span id="offsetSuggest"></span></p>
+                </div>
+            </div>
+        </section>
+
+        <!-- ==========================================================
+        PAGE: FERTILIZER
+        ========================================================== -->
+        <section id="page-fertilizer" class="page">
+            <h2 style="font-size:2rem; font-weight:800; margin-bottom:1.5rem;"><i class="fas fa-flask text-accent"></i> Fertilizer Calculator</h2>
+            <div class="glass">
+                <div class="grid-2">
+                    <div><label>Crop</label><select id="fertCrop"><option>Rice</option><option>Wheat</option><option>Maize</option></select></div>
+                    <div><label>Area (ha)</label><input type="number" id="fertArea" value="1" /></div>
+                    <div><label>Soil N (kg/ha)</label><input type="number" id="fertN" value="50" /></div>
+                    <div><label>Soil P (kg/ha)</label><input type="number" id="fertP" value="30" /></div>
+                    <div><label>Soil K (kg/ha)</label><input type="number" id="fertK" value="40" /></div>
+                </div>
+                <button id="calcFertBtn"><i class="fas fa-calculator"></i> Calculate</button>
+                <div id="fertResult" class="result-box hidden">
+                    <p><strong>N needed:</strong> <span id="fertNneed"></span> kg</p>
+                    <p><strong>P needed:</strong> <span id="fertPneed"></span> kg</p>
+                    <p><strong>K needed:</strong> <span id="fertKneed"></span> kg</p>
+                </div>
+            </div>
+        </section>
+
+        <!-- ==========================================================
+        PAGE: ROTATION
+        ========================================================== -->
+        <section id="page-rotation" class="page">
+            <h2 style="font-size:2rem; font-weight:800; margin-bottom:1.5rem;"><i class="fas fa-sync-alt text-accent"></i> Crop Rotation</h2>
+            <div class="glass">
+                <p class="text-muted">Get a 3‑year rotation plan for your current crop.</p>
+                <select id="rotationCrop" style="max-width:300px;margin:1rem 0;"><option>Rice</option><option>Wheat</option><option>Maize</option><option>Cotton</option></select>
+                <button id="planRotationBtn"><i class="fas fa-calendar-alt"></i> Generate</button>
+                <div id="rotationResult" class="result-box hidden"><pre id="rotationPlan" style="font-family:inherit;font-size:1rem;white-space:pre-wrap;"></pre></div>
+            </div>
+        </section>
+
+        <!-- ==========================================================
+        PAGE: PEST
+        ========================================================== -->
+        <section id="page-pest" class="page">
+            <h2 style="font-size:2rem; font-weight:800; margin-bottom:1.5rem;"><i class="fas fa-bug text-accent"></i> Pest Alert</h2>
+            <div class="glass">
+                <div class="grid-2">
+                    <div><label>Crop</label><select id="pestCrop"><option>Rice</option><option>Wheat</option><option>Maize</option></select></div>
+                    <div><label>Temp (°C)</label><input type="number" id="pestTemp" value="28" /></div>
+                    <div><label>Humidity (%)</label><input type="number" id="pestHum" value="70" /></div>
+                </div>
+                <button id="checkPestBtn"><i class="fas fa-exclamation-triangle"></i> Check Risk</button>
+                <div id="pestResult" class="result-box hidden">
+                    <p><strong>Risk Level:</strong> <span id="pestRisk"></span></p>
+                    <p><strong>Action:</strong> <span id="pestAction"></span></p>
+                </div>
+            </div>
+        </section>
+
+        <!-- ==========================================================
+        PAGE: PROFIT
+        ========================================================== -->
+        <section id="page-profit" class="page">
+            <h2 style="font-size:2rem; font-weight:800; margin-bottom:1.5rem;"><i class="fas fa-coins text-accent"></i> Profit Estimator</h2>
+            <div class="glass">
+                <div class="grid-2">
+                    <div><label>Crop</label><select id="profitCrop"><option>Rice</option><option>Wheat</option><option>Maize</option><option>Cotton</option></select></div>
+                    <div><label>Area (ha)</label><input type="number" id="profitArea" value="2" /></div>
+                    <div><label>Yield (t/ha)</label><input type="number" id="profitYield" value="4" /></div>
+                    <div><label>Price (Rs/kg)</label><input type="number" id="profitPrice" value="20" /></div>
+                    <div><label>Cost (Rs/ha)</label><input type="number" id="profitCost" value="15000" /></div>
+                </div>
+                <button id="calcProfitBtn"><i class="fas fa-calculator"></i> Estimate</button>
+                <div id="profitResult" class="result-box hidden">
+                    <p><strong>Revenue:</strong> Rs. <span id="profitRevenue"></span></p>
+                    <p><strong>Cost:</strong> Rs. <span id="profitCostVal"></span></p>
+                    <p><strong>Net Profit:</strong> Rs. <span id="profitNet"></span></p>
+                </div>
+            </div>
+        </section>
+
+        <!-- ==========================================================
+        PAGE: SEED
+        ========================================================== -->
+        <section id="page-seed" class="page">
+            <h2 style="font-size:2rem; font-weight:800; margin-bottom:1.5rem;"><i class="fas fa-seedling text-accent"></i> Seed Selector</h2>
+            <div class="glass">
+                <div class="grid-2">
+                    <div><label>State/Region</label><input type="text" id="seedRegion" placeholder="e.g., Punjab" value="Punjab" /></div>
+                    <div><label>Crop</label><select id="seedCrop"><option>Rice</option><option>Wheat</option><option>Maize</option></select></div>
+                </div>
+                <button id="selectSeedBtn"><i class="fas fa-seedling"></i> Suggest</button>
+                <div id="seedResult" class="result-box hidden"><pre id="seedSuggestion" style="font-family:inherit;font-size:1rem;"></pre></div>
+            </div>
+        </section>
+
+        <!-- ==========================================================
+        PAGE: HARVEST
+        ========================================================== -->
+        <section id="page-harvest" class="page">
+            <h2 style="font-size:2rem; font-weight:800; margin-bottom:1.5rem;"><i class="fas fa-clock text-accent"></i> Harvest Timer</h2>
+            <div class="glass">
+                <div class="grid-2">
+                    <div><label>Crop</label><select id="harvestCrop"><option>Rice</option><option>Wheat</option><option>Maize</option></select></div>
+                    <div><label>Planting Date</label><input type="date" id="plantingDate" /></div>
+                </div>
+                <button id="startTimerBtn"><i class="fas fa-play"></i> Start Timer</button>
+                <div id="harvestResult" class="result-box hidden">
+                    <p><strong>Days to harvest:</strong> <span id="daysToHarvest"></span> days</p>
+                    <p><strong>Harvest Date:</strong> <span id="harvestDate"></span></p>
+                </div>
+            </div>
+        </section>
+
+        <!-- ==========================================================
+        PAGE: YIELD FORECAST
+        ========================================================== -->
+        <section id="page-yieldforecast" class="page">
+            <h2 style="font-size:2rem; font-weight:800; margin-bottom:1.5rem;"><i class="fas fa-chart-bar text-accent"></i> Yield Forecast (ML Sim)</h2>
+            <div class="glass">
+                <div class="grid-2">
+                    <div><label>N</label><input type="number" id="yfN" value="85" /></div>
+                    <div><label>P</label><input type="number" id="yfP" value="42" /></div>
+                    <div><label>K</label><input type="number" id="yfK" value="55" /></div>
+                    <div><label>Temp</label><input type="number" id="yfTemp" value="27" /></div>
+                    <div><label>Rainfall</label><input type="number" id="yfRain" value="190" /></div>
+                </div>
+                <button id="forecastBtn"><i class="fas fa-chart-line"></i> Forecast</button>
+                <div id="forecastResult" class="result-box hidden">
+                    <p><strong>Predicted Yield:</strong> <span id="forecastYield"></span> t/ha</p>
+                    <p><strong>Confidence:</strong> <span id="forecastConf"></span>%</p>
+                </div>
+            </div>
+        </section>
+
+        <!-- ==========================================================
+        PAGE: FORUM
+        ========================================================== -->
+        <section id="page-forum" class="page">
+            <h2 style="font-size:2rem; font-weight:800; margin-bottom:1.5rem;"><i class="fas fa-comments text-accent"></i> Community Forum</h2>
+            <div class="glass">
+                <div id="forumPosts" style="margin-bottom:1rem;"></div>
+                <div class="flex"><input type="text" id="forumInput" placeholder="Share your farming experience..." style="flex:1;" /><button id="forumPostBtn"><i class="fas fa-paper-plane"></i> Post</button></div>
+            </div>
+        </section>
+
+        <!-- ==========================================================
+        PAGE: WATER
+        ========================================================== -->
+        <section id="page-water" class="page">
+            <h2 style="font-size:2rem; font-weight:800; margin-bottom:1.5rem;"><i class="fas fa-water text-accent"></i> Water Quality</h2>
+            <div class="glass">
+                <div class="grid-2">
+                    <div><label>pH</label><input type="number" id="waterPH" value="7.0" step="0.1" /></div>
+                    <div><label>TDS (ppm)</label><input type="number" id="waterTDS" value="300" /></div>
+                    <div><label>Nitrate (mg/L)</label><input type="number" id="waterNitrate" value="10" /></div>
+                    <div><label>Hardness (mg/L)</label><input type="number" id="waterHardness" value="120" /></div>
+                </div>
+                <button id="checkWaterBtn"><i class="fas fa-vial"></i> Analyze</button>
+                <div id="waterResult" class="result-box hidden">
+                    <p><strong>Quality:</strong> <span id="waterQuality"></span></p>
+                    <p><strong>Recommendation:</strong> <span id="waterReco"></span></p>
+                </div>
+            </div>
+        </section>
+
+        <!-- ==========================================================
+        PAGE: GAMIFICATION
+        ========================================================== -->
+        <section id="page-gamification" class="page">
+            <h2 style="font-size:2rem; font-weight:800; margin-bottom:1.5rem;"><i class="fas fa-trophy text-accent"></i> Gamification</h2>
+            <div class="glass">
+                <div class="grid-2">
+                    <div class="stat-card"><div class="number" id="pointsDisplay">0</div><div class="label">Points</div></div>
+                    <div class="stat-card"><div id="badgeDisplay" style="font-size:1.8rem;">🌱 Beginner</div><div class="label">Badge</div></div>
+                </div>
+                <button id="earnPointsBtn"><i class="fas fa-star"></i> Earn 10 Points</button>
+                <div id="gamificationLog" style="margin-top:1rem; color:var(--text-secondary);"></div>
+            </div>
+        </section>
+
+        <!-- ==========================================================
+        PAGE: HISTORY
+        ========================================================== -->
+        <section id="page-history" class="page">
+            <h2 style="font-size:2rem; font-weight:800; margin-bottom:1.5rem;"><i class="fas fa-history text-accent"></i> History</h2>
+            <div class="glass">
+                <div class="flex">
+                    <button id="clearHistoryBtn" class="secondary"><i class="fas fa-trash"></i> Clear</button>
+                    <button id="exportCsvBtn"><i class="fas fa-file-csv"></i> Export CSV</button>
+                </div>
+                <div id="historyList" style="max-height:400px;overflow-y:auto;margin-top:1.5rem;"></div>
+            </div>
+        </section>
+
+    </div>
+
+    <!-- ============================================================
+    CHATBOT
+    ============================================================ -->
+    <button class="chatbot-float" id="chatbotFloat"><i class="fas fa-robot"></i> Ask AI</button>
+    <div class="chatbot-window" id="chatbotWindow">
+        <div class="messages" id="chatMessages">
+            <div class="msg bot">👋 Hello! I'm your farm assistant. Ask me about crops, soil, pests, or weather.</div>
+        </div>
+        <div class="input-area">
+            <input type="text" id="chatInput" placeholder="Type your question..." />
+            <button id="chatSendBtn"><i class="fas fa-paper-plane"></i></button>
+        </div>
+    </div>
+
+    <!-- ============================================================
+    JAVASCRIPT — ALL LOGIC
+    ============================================================ -->
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+
+            // ============================================================
+            // 1. PARTICLE BACKGROUND
+            // ============================================================
+            const canvas = document.getElementById('particles-canvas');
+            const ctx = canvas.getContext('2d');
+            let w = canvas.width = window.innerWidth;
+            let h = canvas.height = window.innerHeight;
+            const particles = [];
+            for (let i = 0; i < 90; i++) {
+                particles.push({
+                    x: Math.random() * w,
+                    y: Math.random() * h,
+                    r: Math.random() * 3 + 1,
+                    a: Math.random() * 0.5 + 0.1,
+                    s: 0.2 + Math.random() * 0.6
+                });
+            }
+            function drawParticles() {
+                ctx.clearRect(0, 0, w, h);
+                for (const p of particles) {
+                    ctx.beginPath();
+                    ctx.arc(p.x, p.y, p.r, 0, Math.PI * 2);
+                    ctx.fillStyle = `rgba(111,207,151,${p.a})`;
+                    ctx.fill();
+                    p.y -= p.s;
+                    if (p.y < -10) { p.y = h + 10;
+                        p.x = Math.random() * w; }
+                }
+                requestAnimationFrame(drawParticles);
+            }
+            drawParticles();
+            window.addEventListener('resize', () => {
+                w = canvas.width = window.innerWidth;
+                h = canvas.height = window.innerHeight;
+            });
+
+            // ============================================================
+            // 2. TOAST SYSTEM
+            // ============================================================
+            function showToast(msg, type = 'success') {
+                const container = document.getElementById('toast-container');
+                const toast = document.createElement('div');
+                toast.className = `toast ${type}`;
+                toast.innerHTML = `<i class="fas ${type === 'success' ? 'fa-check-circle' : 'fa-exclamation-circle'}"></i> ${msg}`;
+                container.appendChild(toast);
+                setTimeout(() => { toast.style.opacity = '0';
+                    toast.style.transform = 'translateX(60px)';
+                    setTimeout(() => toast.remove(), 400); }, 3500);
+            }
+
+            // ============================================================
+            // 3. NAVIGATION
+            // ============================================================
+            const sidebar = document.getElementById('sidebar');
+            const hamburger = document.getElementById('hamburgerBtn');
+            const navLinks = document.querySelectorAll('#navMenu a');
+            const pages = document.querySelectorAll('.page');
+
+            window.navigateTo = function(pageId) {
+                pages.forEach(p => p.classList.remove('active'));
+                document.getElementById('page-' + pageId).classList.add('active');
+                navLinks.forEach(a => a.classList.remove('active'));
+                const target = document.querySelector(`#navMenu a[data-page="${pageId}"]`);
+                if (target) target.classList.add('active');
+                if (window.innerWidth <= 900) sidebar.classList.remove('open');
+                // Re-render chart if market
+                if (pageId === 'market') renderMarket();
+                if (pageId === 'dashboard') updateDashboard();
+            };
+
+            navLinks.forEach(link => {
+                link.addEventListener('click', (e) => {
+                    e.preventDefault();
+                    const page = link.dataset.page;
+                    navigateTo(page);
+                });
+            });
+
+            hamburger.addEventListener('click', () => sidebar.classList.toggle('open'));
+
+            // ============================================================
+            // 4. LIVE CLOCK
+            // ============================================================
+            function updateClock() {
+                document.getElementById('liveClock').textContent = new Date().toLocaleTimeString();
+            }
+            setInterval(updateClock, 1000);
+            updateClock();
+
+            // ============================================================
+            // 5. DARK/LIGHT TOGGLE
+            // ============================================================
+            document.getElementById('darkToggle').addEventListener('click', () => {
+                document.body.classList.toggle('light');
+                const icon = document.getElementById('darkToggle').querySelector('i');
+                if (document.body.classList.contains('light')) {
+                    icon.className = 'fas fa-sun';
+                    document.getElementById('darkToggle').innerHTML = '<i class="fas fa-sun"></i> Dark / Light';
+                } else {
+                    icon.className = 'fas fa-moon';
+                    document.getElementById('darkToggle').innerHTML = '<i class="fas fa-moon"></i> Dark / Light';
+                }
+                showToast('Theme toggled');
+            });
+
+            // ============================================================
+            // 6. LANGUAGE TOGGLE (Mock)
+            // ============================================================
+            let currentLang = 'en';
+            document.getElementById('langToggle').addEventListener('click', () => {
+                currentLang = currentLang === 'en' ? 'hi' : 'en';
+                document.getElementById('langToggle').innerHTML =
+                    `<i class="fas fa-globe"></i> ${currentLang.toUpperCase()}`;
+                showToast(`Language switched to ${currentLang === 'en' ? 'English' : 'Hindi'} (demo)`);
+            });
+
+            // ============================================================
+            // 7. DASHBOARD
+            // ============================================================
+            function updateDashboard() {
+                const history = JSON.parse(localStorage.getItem('agriHistory') || '[]');
+                document.getElementById('dashCrops').textContent = history.length || 0;
+                let totalYield = history.reduce((sum, h) => sum + parseFloat(h.yield || 0), 0);
+                document.getElementById('dashYield').textContent = (totalYield / (history.length || 1)).toFixed(1);
+                document.getElementById('dashCarbon').textContent = Math.round(Math.random() * 300 + 200);
+            }
+            updateDashboard();
+
+            // Weather
+            async function fetchWeather() {
+                const el = document.getElementById('dashWeather');
+                el.classList.remove('shimmer');
+                try {
+                    const res = await fetch(
+                        'https://api.open-meteo.com/v1/forecast?latitude=28.6139&longitude=77.2090&current_weather=true');
+                    const data = await res.json();
+                    const temp = data.current_weather.temperature;
+                    const wind = data.current_weather.windspeed;
+                    el.innerHTML =
+                        `<i class="fas fa-cloud-sun"></i> <strong>New Delhi</strong> — 🌡️ ${temp}°C · 💨 ${wind} km/h · <span class="badge">Live</span>`;
+                } catch {
+                    el.innerHTML =
+                        `<i class="fas fa-cloud-sun"></i> <strong>New Delhi</strong> — 🌡️ 28°C · 💨 12 km/h · <span class="badge">Demo</span>`;
+                }
+            }
+            fetchWeather();
+
+            // Dashboard Chart
+            const dashCtx = document.getElementById('dashChart').getContext('2d');
+            new Chart(dashCtx, {
+                type: 'line',
+                data: {
+                    labels: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun'],
+                    datasets: [{
+                        label: 'Yield (t/ha)',
+                        data: [2.8, 3.1, 3.5, 4.0, 4.2, 4.5],
+                        borderColor: '#6fcf97',
+                        backgroundColor: 'rgba(111,207,151,0.1)',
+                        fill: true,
+                        tension: 0.4,
+                        borderWidth: 3,
+                        pointBackgroundColor: '#6fcf97'
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    plugins: {
+                        legend: { labels: { color: getComputedStyle(document.documentElement)
+                                .getPropertyValue('--text-secondary').trim() } }
+                    },
+                    scales: {
+                        y: { grid: { color: 'rgba(255,255,255,0.05)' }, ticks: { color: getComputedStyle(
+                                    document.documentElement).getPropertyValue('--text-secondary').trim() } },
+                        x: { grid: { display: false }, ticks: { color: getComputedStyle(document.documentElement)
+                                    .getPropertyValue('--text-secondary').trim() } }
+                    }
+                }
+            });
+
+            // ============================================================
+            // 8. CROP ADVISOR
+            // ============================================================
+            function getCropAndYield(N, P, K, temp, hum, ph, rain) {
+                let crop = "Millets",
+                    base = 2.5;
+                if (rain > 200 && hum > 70 && ph > 5.5 && ph < 7.5) crop = "Rice", base = 4.8;
+                else if (temp > 20 && rain > 100 && rain < 250 && N > 50) crop = "Maize", base = 5.2;
+                else if (N < 60 && temp < 30 && rain < 150) crop = "Chickpea", base = 1.9;
+                else if (temp > 25 && rain > 60 && rain < 180 && K > 40) crop = "Cotton", base = 2.8;
+                else if (rain > 150 && N > 80 && P > 50) crop = "Sugarcane", base = 70;
+                else if (temp > 15 && temp < 28 && rain > 50 && rain < 150 && ph > 6 && ph < 8) crop = "Wheat", base =
+                3.4;
+                let yieldAdj = base + (N / 200) * 0.8 + (P / 200) * 0.6 + (K / 200) * 0.5 - Math.abs(ph - 6.5) * 0.2 + (rain /
+                    300) * 1.2;
+                if (crop === "Sugarcane") yieldAdj = Math.min(85, yieldAdj);
+                else yieldAdj = Math.min(12, Math.max(0.8, yieldAdj));
+                let tip = "Use organic compost and balanced NPK.";
+                if (crop === "Rice") tip = "Increase potassium during tillering.";
+                if (crop === "Wheat") tip = "Apply zinc sulfate.";
+                return { crop, yield: yieldAdj.toFixed(1), tip };
+            }
+
+            document.getElementById('predictCropBtn').addEventListener('click', () => {
+                const N = parseFloat(document.getElementById('nVal').value);
+                const P = parseFloat(document.getElementById('pVal').value);
+                const K = parseFloat(document.getElementById('kVal').value);
+                const temp = parseFloat(document.getElementById('tempVal').value);
+                const hum = parseFloat(document.getElementById('humVal').value);
+                const ph = parseFloat(document.getElementById('phVal').value);
+                const rain = parseFloat(document.getElementById('rainVal').value);
+                const res = getCropAndYield(N, P, K, temp, hum, ph, rain);
+                document.getElementById('recCrop').textContent = res.crop;
+                document.getElementById('recYield').textContent = res.yield;
+                document.getElementById('fertTip').textContent = res.tip;
+                document.getElementById('cropResult').classList.remove('hidden');
+                // QR
+                const qrDiv = document.getElementById('qrcode');
+                qrDiv.innerHTML = '';
+                new QRCode(qrDiv, { text: `Crop:${res.crop}, Yield:${res.yield} t/ha`, width: 128, height: 128 });
+                showToast(`✅ Recommended: ${res.crop}`);
+                updateDashboard();
+                earnPoints(5);
+            });
+
+            // Voice
+            const SpeechRecog = window.SpeechRecognition || window.webkitSpeechRecognition;
+            if (SpeechRecog) {
+                const recognizer = new SpeechRecog();
+                recognizer.lang = 'en-IN';
+                document.getElementById('voiceCropBtn').addEventListener('click', () => {
+                    recognizer.start();
+                    document.getElementById('voiceCropBtn').innerHTML = '<i class="fas fa-microphone"></i> Listening...';
+                });
+                recognizer.onresult = (e) => {
+                    const text = e.results[0][0].transcript.toLowerCase();
+                    document.getElementById('voiceCropBtn').innerHTML = '<i class="fas fa-microphone"></i> Voice';
+                    const nums = text.match(/\d+(\.\d+)?/g);
+                    if (nums && nums.length >= 7) {
+                        document.getElementById('nVal').value = nums[0];
+                        document.getElementById('pVal').value = nums[1];
+                        document.getElementById('kVal').value = nums[2];
+                        document.getElementById('tempVal').value = nums[3];
+                        document.getElementById('humVal').value = nums[4];
+                        document.getElementById('phVal').value = nums[5];
+                        document.getElementById('rainVal').value = nums[6];
+                        showToast('🎤 Fields filled via voice!');
+                    } else {
+                        showToast('❌ Need 7 numbers: N,P,K,temp,hum,pH,rain', 'error');
+                    }
+                };
+                recognizer.onerror = () => {
+                    document.getElementById('voiceCropBtn').innerHTML = '<i class="fas fa-microphone"></i> Voice';
+                    showToast('🎤 Voice recognition failed.', 'error');
+                };
+            }
+
+            // Speak result
+            document.getElementById('speakResultBtn').addEventListener('click', () => {
+                const crop = document.getElementById('recCrop').textContent;
+                const y = document.getElementById('recYield').textContent;
+                const msg = new SpeechSynthesisUtterance(`Recommended crop is ${crop} with yield ${y} tons per hectare.`);
+                window.speechSynthesis.speak(msg);
+            });
+
+            // Save
+            document.getElementById('saveRecBtn').addEventListener('click', () => {
+                const crop = document.getElementById('recCrop').textContent;
+                const yieldVal = document.getElementById('recYield').textContent;
+                const params = {
+                    N: document.getElementById('nVal').value,
+                    P: document.getElementById('pVal').value,
+                    K: document.getElementById('kVal').value
+                };
+                let hist = JSON.parse(localStorage.getItem('agriHistory') || '[]');
+                hist.unshift({ date: new Date().toLocaleString(), crop, yield: yieldVal, params });
+                localStorage.setItem('agriHistory', JSON.stringify(hist.slice(0, 20)));
+                showToast('💾 Saved to history!');
+                displayHistory();
+                updateDashboard();
+                earnPoints(5);
+            });
+
+            // PDF
+            document.getElementById('exportPdfBtn').addEventListener('click', () => {
+                const el = document.getElementById('cropResult');
+                html2pdf().from(el).set({ filename: 'AgriNova_Report.pdf' }).save();
+                showToast('📄 Exporting PDF...');
+            });
+
+            // ============================================================
+            // 9. DISEASE DETECTION (MobileNet)
+            // ============================================================
+            let mobilenetModel;
+            async function loadModel() {
+                const loader = document.getElementById('diseaseLoader');
+                loader.classList.remove('hidden');
+                try {
+                    mobilenetModel = await mobilenet.load();
+                    showToast('🧠 AI Model loaded successfully!');
+                } catch (e) {
+                    showToast('❌ Failed to load AI model.', 'error');
+                }
+                loader.classList.add('hidden');
+            }
+            loadModel();
+
+            const diseaseMap = { corn: 'Corn Blight', apple: 'Apple Scab', tomato: 'Tomato Late Blight',
+                potato: 'Potato Early Blight', grape: 'Grape Black Rot', wheat: 'Wheat Rust', rice: 'Rice Blast' };
+            const remedyMap = {
+                'Corn Blight': 'Azoxystrobin',
+                'Apple Scab': 'Sulfur spray',
+                'Tomato Late Blight': 'Copper fungicide',
+                'Potato Early Blight': 'Chlorothalonil',
+                'Grape Black Rot': 'Myclobutanil',
+                'Wheat Rust': 'Tebuconazole',
+                'Rice Blast': 'Tricyclazole',
+                'General Leaf Disease': 'Neem oil'
+            };
+
+            document.getElementById('leafImage').addEventListener('change', async (e) => {
+                const file = e.target.files[0];
+                if (!file) return;
+                if (!mobilenetModel) { showToast('⏳ Model still loading. Please wait.', 'error'); return; }
+                const img = new Image();
+                const canvas = document.getElementById('diseaseCanvas');
+                const ctx = canvas.getContext('2d');
+                img.onload = async () => {
+                    ctx.drawImage(img, 0, 0, 224, 224);
+                    const pred = await mobilenetModel.classify(canvas);
+                    let disease = 'General Leaf Disease';
+                    for (const k in diseaseMap) {
+                        if (pred[0].className.toLowerCase().includes(k)) disease = diseaseMap[k];
+                    }
+                    document.getElementById('diseaseName').textContent = disease;
+                    document.getElementById('diseaseConf').textContent = (pred[0].probability * 100).toFixed(1);
+                    document.getElementById('remedyText').textContent = remedyMap[disease] || 'Apply organic fungicide';
+                    document.getElementById('diseaseOutput').classList.remove('hidden');
+                    showToast(`🩺 Diagnosed: ${disease}`);
+                    earnPoints(10);
+                };
+                img.src = URL.createObjectURL(file);
+            });
+
+            // ============================================================
+            // 10. SOIL HEALTH
+            // ============================================================
+            document.getElementById('analyzeSoilBtn').addEventListener('click', () => {
+                const N = parseFloat(document.getElementById('soilN').value);
+                const P = parseFloat(document.getElementById('soilP').value);
+                const K = parseFloat(document.getElementById('soilK').value);
+                const pH = parseFloat(document.getElementById('soilpH').value);
+                const om = parseFloat(document.getElementById('organicMatter').value);
+                let score = Math.min(100, Math.max(0,
+                    (Math.min(N / 150, 1) * 20 + Math.min(P / 100, 1) * 15 + Math.min(K / 150, 1) * 15 +
+                        (1 - Math.abs(pH - 6.5) / 3) * 25 + Math.min(om / 4, 1) * 25)
+                ));
+                const rating = score > 75 ? 'Excellent' : score > 50 ? 'Good' : score > 30 ? 'Moderate' : 'Poor';
+                let reco = '';
+                if (pH < 5.5) reco += 'Add lime. ';
+                if (pH > 7.8) reco += 'Add sulfur. ';
+                if (om < 2) reco += 'Add compost. ';
+                if (N < 50) reco += 'Apply nitrogen. ';
+                if (!reco) reco = 'Soil is balanced. Maintain with cover crops.';
+                document.getElementById('soilScore').textContent = Math.round(score);
+                document.getElementById('soilRating').textContent = rating;
+                document.getElementById('soilReco').textContent = reco;
+                document.getElementById('soilGauge').style.width = score + '%';
+                document.getElementById('soilResult').classList.remove('hidden');
+                showToast(`🧪 Soil Score: ${Math.round(score)}`);
+                earnPoints(8);
+            });
+
+            // ============================================================
+            // 11. IRRIGATION
+            // ============================================================
+            document.getElementById('calcIrrigationBtn').addEventListener('click', () => {
+                const crop = document.getElementById('irriCrop').value;
+                const temp = parseFloat(document.getElementById('irriTemp').value);
+                const rain = parseFloat(document.getElementById('irriRain').value);
+                const moisture = parseFloat(document.getElementById('soilMoisture').value);
+                const factor = { Rice: 1.2, Wheat: 0.8, Maize: 0.9, Cotton: 0.7, Sugarcane: 1.1 } [crop] || 1;
+                const et = 0.5 * factor * (temp / 25);
+                const dailyNeed = Math.max(0.5, et).toFixed(1);
+                const freq = moisture < 30 ? 'Irrigate immediately, then every 2 days' : moisture < 50 ? 'Every 4 days' :
+                    'Weekly';
+                const alert = rain > 20 ? 'Rainfall expected, reduce irrigation' : 'Normal schedule';
+                document.getElementById('dailyWater').textContent = dailyNeed;
+                document.getElementById('irriFreq').textContent = freq;
+                document.getElementById('irriAlert').textContent = alert;
+                document.getElementById('irrigationResult').classList.remove('hidden');
+                showToast(`💧 Daily need: ${dailyNeed} mm`);
+                earnPoints(5);
+            });
+
+            // ============================================================
+            // 12. MARKET
+            // ============================================================
+            const marketCrops = ['Rice', 'Wheat', 'Maize', 'Cotton', 'Sugarcane', 'Chickpea'];
+            let marketChartInstance = null;
+
+            function renderMarket() {
+                const grid = document.getElementById('marketGrid');
+                const data = marketCrops.map(c => ({ crop: c, price: (Math.random() * 30 + 15).toFixed(2), change: (Math
+                        .random() * 6 - 3).toFixed(1) }));
+                grid.innerHTML = '';
+                data.forEach(d => {
+                    const up = parseFloat(d.change) >= 0;
+                    const card = `
+                        <div class="glass" style="padding:1.2rem;text-align:center;">
+                            <i class="fas fa-tractor" style="font-size:2rem;color:var(--accent);"></i>
+                            <h4 style="margin:0.5rem 0;">${d.crop}</h4>
+                            <p style="font-size:1.8rem;font-weight:800;color:var(--accent);">₹${d.price}/kg</p>
+                            <p style="color:${up?'#8bc34a':'#ef5350'};font-weight:600;">${up?'▲':'▼'} ${Math.abs(d.change)}%</p>
+                        </div>
+                    `;
+                    grid.insertAdjacentHTML('beforeend', card);
+                });
+                // Chart
+                const ctx = document.getElementById('marketChart').getContext('2d');
+                if (marketChartInstance) marketChartInstance.destroy();
+                marketChartInstance = new Chart(ctx, {
+                    type: 'bar',
+                    data: {
+                        labels: data.map(d => d.crop),
+                        datasets: [{
+                            label: 'Price (Rs/kg)',
+                            data: data.map(d => parseFloat(d.price)),
+                            backgroundColor: '#6fcf97',
+                            borderRadius: 8
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        plugins: { legend: { labels: { color: getComputedStyle(document.documentElement)
+                                    .getPropertyValue('--text-secondary').trim() } } },
+                        scales: {
+                            y: { grid: { color: 'rgba(255,255,255,0.05)' }, ticks: { color: getComputedStyle(
+                                        document.documentElement).getPropertyValue('--text-secondary').trim() } },
+                            x: { grid: { display: false }, ticks: { color: getComputedStyle(document.documentElement)
+                                        .getPropertyValue('--text-secondary').trim() } }
+                        }
+                    }
+                });
+            }
+            document.getElementById('refreshMarketBtn').addEventListener('click', () => { renderMarket();
+                showToast('📊 Market refreshed'); });
+            renderMarket();
+            setInterval(renderMarket, 15000);
+
+            // ============================================================
+            // 13. CARBON
+            // ============================================================
+            document.getElementById('calcCarbonBtn').addEventListener('click', () => {
+                const area = parseFloat(document.getElementById('farmArea').value);
+                const fert = parseFloat(document.getElementById('fertUse').value);
+                const diesel = parseFloat(document.getElementById('dieselUse').value);
+                const elec = parseFloat(document.getElementById('electricity').value);
+                const co2 = fert * 1.2 + diesel * 2.68 + elec * 0.45;
+                const perHa = co2 / area;
+                document.getElementById('co2Value').textContent = co2.toFixed(0);
+                document.getElementById('co2PerHa').textContent = perHa.toFixed(0);
+                document.getElementById('offsetSuggest').textContent = perHa > 800 ? 'Plant 20 trees per hectare.' :
+                    'Low carbon! Maintain organic matter.';
+                document.getElementById('carbonResult').classList.remove('hidden');
+                showToast(`🌍 CO₂: ${co2.toFixed(0)} kg`);
+                earnPoints(6);
+            });
+
+            // ============================================================
+            // 14. FERTILIZER
+            // ============================================================
+            document.getElementById('calcFertBtn').addEventListener('click', () => {
+                const crop = document.getElementById('fertCrop').value;
+                const area = parseFloat(document.getElementById('fertArea').value);
+                const N = parseFloat(document.getElementById('fertN').value);
+                const P = parseFloat(document.getElementById('fertP').value);
+                const K = parseFloat(document.getElementById('fertK').value);
+                const req = { Rice: [120, 60, 60], Wheat: [100, 50, 50], Maize: [140, 70, 70] } [crop] || [100, 50,
+                50];
+                const nNeed = Math.max(0, req[0] - N) * area;
+                const pNeed = Math.max(0, req[1] - P) * area;
+                const kNeed = Math.max(0, req[2] - K) * area;
+                document.getElementById('fertNneed').textContent = nNeed.toFixed(1);
+                document.getElementById('fertPneed').textContent = pNeed.toFixed(1);
+                document.getElementById('fertKneed').textContent = kNeed.toFixed(1);
+                document.getElementById('fertResult').classList.remove('hidden');
+                showToast('🧪 Fertilizer calculated');
+                earnPoints(5);
+            });
+
+            // ============================================================
+            // 15. ROTATION
+            // ============================================================
+            document.getElementById('planRotationBtn').addEventListener('click', () => {
+                const crop = document.getElementById('rotationCrop').value;
+                let plan = [];
+                if (crop === 'Rice') plan = ['Rice', 'Wheat', 'Maize'];
+                else if (crop === 'Wheat') plan = ['Wheat', 'Maize', 'Chickpea'];
+                else if (crop === 'Maize') plan = ['Maize', 'Wheat', 'Rice'];
+                else plan = ['Cotton', 'Wheat', 'Maize'];
+                document.getElementById('rotationPlan').textContent =
+                    `🌱 Year 1: ${plan[0]}\n🌿 Year 2: ${plan[1]}\n🌾 Year 3: ${plan[2]}`;
+                document.getElementById('rotationResult').classList.remove('hidden');
+                showToast('🔄 Rotation plan generated');
+                earnPoints(4);
+            });
+
+            // ============================================================
+            // 16. PEST
+            // ============================================================
+            document.getElementById('checkPestBtn').addEventListener('click', () => {
+                const temp = parseFloat(document.getElementById('pestTemp').value);
+                const hum = parseFloat(document.getElementById('pestHum').value);
+                let risk = 'Low',
+                    action = 'No action needed.';
+                if (temp > 28 && hum > 75) { risk = 'High';
+                    action = 'Apply neem oil and monitor daily.'; } else if (temp > 25 && hum > 65) { risk = 'Medium';
+                    action = 'Keep an eye out for pests.'; }
+                document.getElementById('pestRisk').textContent = risk;
+                document.getElementById('pestAction').textContent = action;
+                document.getElementById('pestResult').classList.remove('hidden');
+                showToast(`🐛 Pest Risk: ${risk}`);
+                earnPoints(5);
+            });
+
+            // ============================================================
+            // 17. PROFIT
+            // ============================================================
+            document.getElementById('calcProfitBtn').addEventListener('click', () => {
+                const area = parseFloat(document.getElementById('profitArea').value);
+                const yieldVal = parseFloat(document.getElementById('profitYield').value);
+                const price = parseFloat(document.getElementById('profitPrice').value);
+                const cost = parseFloat(document.getElementById('profitCost').value);
+                const revenue = area * yieldVal * price;
+                const totalCost = area * cost;
+                const profit = revenue - totalCost;
+                document.getElementById('profitRevenue').textContent = revenue.toFixed(0);
+                document.getElementById('profitCostVal').textContent = totalCost.toFixed(0);
+                document.getElementById('profitNet').textContent = profit.toFixed(0);
+                document.getElementById('profitResult').classList.remove('hidden');
+                showToast(`💰 Profit: Rs. ${profit.toFixed(0)}`);
+                earnPoints(6);
+            });
+
+            // ============================================================
+            // 18. SEED
+            // ============================================================
+            document.getElementById('selectSeedBtn').addEventListener('click', () => {
+                const region = document.getElementById('seedRegion').value.toLowerCase();
+                const crop = document.getElementById('seedCrop').value;
+                const map = { punjab: { Rice: 'PR-126', Wheat: 'HD-2967', Maize: 'PMH-1' }, default: { Rice: 'IR-64',
+                        Wheat: 'GW-322', Maize: 'HQPM-1' } };
+                const data = map[region] || map.default;
+                document.getElementById('seedSuggestion').textContent =
+                    `🌱 Recommended: ${data[crop] || 'Unknown'}\nℹ️ Visit local agri center for availability.`;
+                document.getElementById('seedResult').classList.remove('hidden');
+                showToast('🌾 Seed suggestion ready');
+                earnPoints(4);
+            });
+
+            // ============================================================
+            // 19. HARVEST
+            // ============================================================
+            document.getElementById('startTimerBtn').addEventListener('click', () => {
+                const crop = document.getElementById('harvestCrop').value;
+                const plantDate = new Date(document.getElementById('plantingDate').value);
+                if (isNaN(plantDate)) { showToast('❌ Select a valid planting date.', 'error'); return; }
+                const days = { Rice: 120, Wheat: 150, Maize: 100 } [crop] || 120;
+                const harvestDate = new Date(plantDate);
+                harvestDate.setDate(harvestDate.getDate() + days);
+                const today = new Date();
+                const remaining = Math.ceil((harvestDate - today) / (1000 * 60 * 60 * 24));
+                document.getElementById('daysToHarvest').textContent = Math.max(0, remaining);
+                document.getElementById('harvestDate').textContent = harvestDate.toLocaleDateString();
+                document.getElementById('harvestResult').classList.remove('hidden');
+                showToast(`⏳ ${Math.max(0, remaining)} days to harvest`);
+                earnPoints(5);
+            });
+            document.getElementById('plantingDate').valueAsDate = new Date();
+
+            // ============================================================
+            // 20. YIELD FORECAST
+            // ============================================================
+            document.getElementById('forecastBtn').addEventListener('click', () => {
+                const N = parseFloat(document.getElementById('yfN').value);
+                const P = parseFloat(document.getElementById('yfP').value);
+                const K = parseFloat(document.getElementById('yfK').value);
+                const temp = parseFloat(document.getElementById('yfTemp').value);
+                const rain = parseFloat(document.getElementById('yfRain').value);
+                let y = 0.8 + 0.015 * N + 0.01 * P + 0.008 * K + 0.05 * (temp - 20) + 0.008 * rain;
+                y = Math.min(12, Math.max(1, y));
+                const conf = 70 + Math.random() * 25;
+                document.getElementById('forecastYield').textContent = y.toFixed(2);
+                document.getElementById('forecastConf').textContent = conf.toFixed(0);
+                document.getElementById('forecastResult').classList.remove('hidden');
+                showToast(`📈 Forecast: ${y.toFixed(2)} t/ha`);
+                earnPoints(7);
+            });
+
+            // ============================================================
+            // 21. FORUM
+            // ============================================================
+            let forumPosts = JSON.parse(localStorage.getItem('forumPosts') || '[]');
+
+            function renderForum() {
+                const container = document.getElementById('forumPosts');
+                if (forumPosts.length === 0) { container.innerHTML =
+                        '<p class="text-muted">No posts yet. Be the first!</p>'; return; }
+                container.innerHTML = forumPosts.map(p =>
+                    `<div class="result-box" style="margin-bottom:0.8rem;"><strong>${p.name}</strong> · <span class="text-muted">${p.date}</span><br>${p.text}</div>`
+                ).join('');
+            }
+            document.getElementById('forumPostBtn').addEventListener('click', () => {
+                const input = document.getElementById('forumInput');
+                const text = input.value.trim();
+                if (!text) return;
+                forumPosts.unshift({ name: 'Farmer', date: new Date().toLocaleString(), text });
+                localStorage.setItem('forumPosts', JSON.stringify(forumPosts.slice(0, 50)));
+                renderForum();
+                input.value = '';
+                showToast('📝 Posted!');
+                earnPoints(3);
+            });
+            renderForum();
+
+            // ============================================================
+            // 22. WATER QUALITY
+            // ============================================================
+            document.getElementById('checkWaterBtn').addEventListener('click', () => {
+                const ph = parseFloat(document.getElementById('waterPH').value);
+                const tds = parseFloat(document.getElementById('waterTDS').value);
+                const nitrate = parseFloat(document.getElementById('waterNitrate').value);
+                const hardness = parseFloat(document.getElementById('waterHardness').value);
+                let quality = 'Good',
+                    reco = 'Suitable for irrigation.';
+                if (ph < 6.5 || ph > 8.5) { quality = 'Moderate';
+                    reco = 'Adjust pH with acid/alkali.'; }
+                if (tds > 800) { quality = 'Poor';
+                    reco = 'Use drip irrigation to avoid salt buildup.'; }
+                if (nitrate > 30) { quality = 'Poor';
+                    reco = 'Nitrate too high; reduce fertilizer.'; }
+                document.getElementById('waterQuality').textContent = quality;
+                document.getElementById('waterReco').textContent = reco;
+                document.getElementById('waterResult').classList.remove('hidden');
+                showToast(`💧 Water Quality: ${quality}`);
+                earnPoints(4);
+            });
+
+            // ============================================================
+            // 23. GAMIFICATION
+            // ============================================================
+            let points = parseInt(localStorage.getItem('agriPoints') || '0');
+            let badge = '🌱 Beginner';
+
+            function updateGamification() {
+                document.getElementById('pointsDisplay').textContent = points;
+                if (points > 100) badge = '🌟 Gold Farmer';
+                else if (points > 50) badge = '🌿 Silver Gardener';
+                else if (points > 20) badge = '🌻 Bronze Grower';
+                document.getElementById('badgeDisplay').textContent = badge;
+                localStorage.setItem('agriPoints', points);
+            }
+
+            function earnPoints(pts) {
+                points += pts;
+                updateGamification();
+                document.getElementById('gamificationLog').innerHTML = `✨ +${pts} points earned! Total: ${points}`;
+            }
+            document.getElementById('earnPointsBtn').addEventListener('click', () => earnPoints(10));
+            updateGamification();
+
+            // ============================================================
+            // 24. HISTORY
+            // ============================================================
+            function displayHistory() {
+                const hist = JSON.parse(localStorage.getItem('agriHistory') || '[]');
+                const container = document.getElementById('historyList');
+                if (hist.length === 0) { container.innerHTML = '<p class="text-muted">No history yet.</p>'; return; }
+                container.innerHTML = hist.map(h =>
+                    `<div class="result-box" style="margin-bottom:0.8rem;"><strong>${h.date}</strong> · Crop: ${h.crop} · Yield: ${h.yield} t/ha · N:${h.params.N} P:${h.params.P} K:${h.params.K}</div>`
+                ).join('');
+            }
+            document.getElementById('clearHistoryBtn').addEventListener('click', () => {
+                localStorage.removeItem('agriHistory');
+                displayHistory();
+                showToast('🗑️ History cleared');
+            });
+            document.getElementById('exportCsvBtn').addEventListener('click', () => {
+                const hist = JSON.parse(localStorage.getItem('agriHistory') || '[]');
+                if (hist.length === 0) { showToast('❌ No data to export.', 'error'); return; }
+                let csv = 'Date,Crop,Yield,N,P,K\n';
+                hist.forEach(h => csv += `${h.date},${h.crop},${h.yield},${h.params.N},${h.params.P},${h.params.K}\n`);
+                const blob = new Blob([csv], { type: 'text/csv' });
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = 'AgriNova_History.csv';
+                a.click();
+                URL.revokeObjectURL(url);
+                showToast('📊 CSV exported!');
+            });
+            displayHistory();
+
+            // ============================================================
+            // 25. CHATBOT
+            // ============================================================
+            document.getElementById('chatbotFloat').addEventListener('click', () => {
+                document.getElementById('chatbotWindow').classList.toggle('open');
+            });
+
+            document.getElementById('chatSendBtn').addEventListener('click', handleChat);
+            document.getElementById('chatInput').addEventListener('keypress', (e) => {
+                if (e.key === 'Enter') handleChat();
+            });
+
+            function handleChat() {
+                const input = document.getElementById('chatInput');
+                const msg = input.value.trim();
+                if (!msg) return;
+                const container = document.getElementById('chatMessages');
+                container.innerHTML += `<div class="msg user">${msg}</div>`;
+                input.value = '';
+                const lower = msg.toLowerCase();
+                let reply = "I'm your farm assistant. Ask me about crops, soil, pests, or weather.";
+                if (lower.includes('rice')) reply = '🌾 Rice thrives in warm, wet conditions (24-32°C). Ensure good drainage and high nitrogen.';
+                else if (lower.includes('wheat')) reply = '🌿 Wheat prefers cool weather (15-25°C) and well-drained loamy soil.';
+                else if (lower.includes('soil')) reply = '🧪 Test soil pH (6.0-7.5 ideal) and organic matter. Add lime if acidic, sulfur if alkaline.';
+                else if (lower.includes('pest')) reply = '🐛 Use neem oil for organic pest control. Monitor early morning or evening.';
+                else if (lower.includes('weather')) reply = '☁️ Check our live weather module on the Dashboard!';
+                else if (lower.includes('yield')) reply = '📈 Yield depends on nutrients, water, variety, and climate. Use our Yield Forecast tool!';
+                else if (lower.includes('hello') || lower.includes('hi')) reply = '👋 Hello! How can I help you today?';
+                setTimeout(() => {
+                    container.innerHTML += `<div class="msg bot">🤖 ${reply}</div>`;
+                    container.scrollTop = container.scrollHeight;
+                }, 300);
+                earnPoints(2);
+            }
+
+            // ============================================================
+            // 26. PERIODIC DASHBOARD UPDATE
+            // ============================================================
+            setInterval(updateDashboard, 30000);
+            setInterval(fetchWeather, 60000);
+
+            // ============================================================
+            // 27. INITIAL TOAST
+            // ============================================================
+            showToast('🚀 AgriNova AI+ loaded successfully!');
+        });
+    </script>
+</body>
+</html>
